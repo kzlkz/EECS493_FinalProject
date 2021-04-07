@@ -7,6 +7,7 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
+import { Input } from '@material-ui/core';
 
 class App extends React.Component {
   constructor(props) {
@@ -40,8 +41,8 @@ class Contents extends React.Component {
     super(props);
     this.state = {
       activities: [
-        {'name':'493 Prototype', 'category':'work', 'duration':2, 'complete':false},
-        {'name':'watch a movie', 'category':'entertainment', 'duration':3, 'complete':false}
+        {'name':'493 Prototype', 'category':'work', 'duration':2, 'complete':false, 'editable': true},
+        {'name':'watch a movie', 'category':'entertainment', 'duration':3, 'complete':false, 'editable': true}
       ],
       show_list: 'visible',
       show_graphs: 'hidden'
@@ -90,38 +91,91 @@ class Contents extends React.Component {
 class ListPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
+    this.state = props;
+  }
 
-    };
+  editButtonOnClick = () => {
+
+  }
+
+
+  confirmButtonOnClick = () => {
+
+  }
+
+
+  cancelButtonOnClick = () => {
+
+  }
+
+  inputOnChange = () => {
+
+  }
+
+  generateDynamicRow = ({name, category, duration, complete, editable}) => {
+    if (editable) {
+      return (
+        <TableRow>
+          <TableCell>
+          <button type='button' onClick={this.confirmButtonOnClick}>
+            confirm
+          </button>
+          <button type='button' onClick={this.cancelButtonOnClick}>
+            cancel
+          </button>
+          </TableCell>
+          <TableCell align="right">
+            <Input value={name} onChange={this.inputOnChange}/>
+          </TableCell>
+          <TableCell align="right">
+            <Input value={category} onChange={this.inputOnChange}/>
+          </TableCell>
+          <TableCell align="right">
+            <Input value={duration} onChange={this.inputOnChange}/>
+          </TableCell>
+          <TableCell align="right">
+            <Input value={complete} onChange={this.inputOnChange}/>
+          </TableCell>
+        </TableRow>
+      )
+    } else {
+      return (
+        <TableRow>
+          <TableCell>
+            <button type='button' onClick={this.editButtonOnClick}>
+              Edit
+            </button>
+          </TableCell>
+          <TableCell align="right">{name}</TableCell>
+          <TableCell align="right">{category}</TableCell>
+          <TableCell align="right">{duration}</TableCell>
+          <TableCell align="right">{complete}</TableCell>
+        </TableRow>
+      );
+    }
   }
 
   render() {
     return (
     <div id='list_panel'>
-    List panel
-    <p>{this.props.activities[0].name}</p>
+      List panel
+      <p>{this.state.activities[0].name}</p>
     
       <TableContainer component={Paper}>
         <Table aria-label="simple table">
           <TableHead>
             <TableRow>
-              <TableCell>Activities</TableCell>
+              <TableCell>              Actions</TableCell>
+              <TableCell align="right">Activities</TableCell>
               <TableCell align="right">Category</TableCell>
               <TableCell align="right">Duration (hrs)</TableCell>
               <TableCell align="right">Complete</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {this.props.activities.map((activity) => (
-              <TableRow key={activity.name}>
-                <TableCell component="th" scope="row">
-                  {activity.name}
-                </TableCell>
-                <TableCell align="right">{activity.category}</TableCell>
-                <TableCell align="right">{activity.duration}</TableCell>
-                <TableCell align="right">{activity.complete}</TableCell>
-              </TableRow>
-            ))}
+            {this.state.activities.map((activity) => 
+              this.generateDynamicRow(activity)
+            )}
           </TableBody>
         </Table>
       </TableContainer>
