@@ -1,22 +1,13 @@
-import React, { Component } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
+import React from 'react';
 import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
-import Input from '@material-ui/core/Input';
-import Select from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
+import {TableBody, TableCell, TableContainer, TableHead,
+        TableRow, Paper, Input, Select, MenuItem} from '@material-ui/core/';
+import DateFnsUtils from '@date-io/date-fns';
+import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
 
 const catOptions = [
   'work', 'entertainment', 'personal'
 ];
-// const menu = catOptions.map( (opt) =>
-//   <MenuItem value={opt}>{opt}</MenuItem>
-// )
 
 class App extends React.Component {
   constructor(props) {
@@ -26,9 +17,11 @@ class App extends React.Component {
     };
   }
 
+  handleDateChange = (newDate) => {
+    this.setState({date: newDate});
+  }
+
   render() {
-    let { date } = this.state;
-    date = date.toUTCString();
     return (
       <div id='container'>
         <div id='heading'>
@@ -36,10 +29,12 @@ class App extends React.Component {
             <p>How is your day, Luna?</p>
           </div>
           <div id='date'>
-            <p>Date: {date}</p>
+            <MuiPickersUtilsProvider utils={DateFnsUtils}>
+              <DatePicker value={this.state.date} onChange={this.handleDateChange} />
+            </MuiPickersUtilsProvider>
           </div>
         </div>
-        <Contents />
+        <Contents date={this.state.date}/>
       </div>
     );
   }
@@ -49,19 +44,21 @@ class Contents extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      // activities: {
-      //   '2021-04-08':{
-      //     1:{'name':'493 Prototype', 'category':'work', 'duration':2, 'complete':false, 'editable': true},
-      //     2:{'name':'watch a movie', 'category':'entertainment', 'duration':3, 'complete':false, 'editable': true}
-      //   }
-      // },
-      activities: [
-        {'name':'493 Prototype', 'category':'work', 'duration':2, 'complete':false, 'editable': true},
-        {'name':'watch a movie', 'category':'entertainment', 'duration':3, 'complete':false, 'editable': true}
-      ],
+      activities: {
+        '2021-04-08':[ 
+          {'name':'493 Prototype', 'category':'work', 'duration':2, 'complete':false},
+          {'name':'watch a movie', 'category':'entertainment', 'duration':3, 'complete':false}
+        ]
+      },
       show_list: 'visible',
       show_graphs: 'hidden'
     };
+
+    this.contentsDataHandler = this.contentsDataHandler.bind(this);
+  }
+
+  contentsDataHandler = (newActivities) => {
+    this.setState({activities: newActivities});
   }
 
   clickList = () => {
@@ -79,13 +76,12 @@ class Contents extends React.Component {
   }
 
   render() {
-    const { activities } = this.state;
-    const list = activities.map((a) => 
-      <p>{a.name}  {a.Duration}   {a.category}</p>
-    );
+    // Get today's activities
+    let today = this.props.date.toISOString().split('T')[0];
+    let todayActivities = (today in this.state.activities) ? this.state.activities[today]: [];
+
     return (
     <div id='contents'>
-      <div>{list}</div>
       <div id='nav_bar'>
         <button
           type='button'
@@ -97,10 +93,10 @@ class Contents extends React.Component {
         >Show Graphs</button>
       </div>
       <div style={{visibility:this.state.show_list}}>
-        <ListPanel activities={this.state.activities}/>
+        <ListPanel todayActivities={todayActivities} contentsDataHandler={this.contentsDataHandler}/>
       </div>
       <div style={{visibility:this.state.show_graphs}}>
-        <GraphPanel activities={this.state.activities}/>
+        <GraphPanel todayActivities={todayActivities} contentsDataHandler={this.contentsDataHandler}/>
       </div>
     </div>
     );
@@ -113,28 +109,11 @@ class ListPanel extends React.Component {
     super(props);
   }
 
-  editButtonOnClick = () => {
-
-  }
-
-
-  confirmButtonOnClick = () => {
-
-  }
-
-
-  cancelButtonOnClick = () => {
-
-  }
-
-  categoryChange = (event) => {
-  }
-
   updateName = (event) => {
     if (event.code === 'Enter') {
-      for (let i = 0; i<this.props.activities.length; i++) {
-        if (this.props.activities[i].name === event.target.name){
-          this.props.activities[i].name = event.target.value;
+      for (let i = 0; i<this.props.todayActivities.length; i++) {
+        if (this.props.todayActivities[i].name === event.target.name){
+          this.props.todayActivities[i].name = event.target.value;
         }
       }
     }
@@ -144,14 +123,14 @@ class ListPanel extends React.Component {
     if (event.code === 'Enter') {
       const time = event.target.value;
       console.log(time);
-      for (let i = 0; i<this.props.activities.length; i++) {
+      for (let i = 0; i<this.props.todayActivities.length; i++) {
         // check name
-        if (this.props.activities[i].name === event.target.name){
+        if (this.props.todayActivities[i].name === event.target.name){
           if (isNaN(time) || time < 0){
             alert('Duration should be a positive numeric value');
-            event.value = this.props.activities[i].Duration;
+            event.value = this.props.todayActivities[i].Duration;
           } else {
-            this.props.activities[i].Duration = time;
+            this.props.todayActivities[i].Duration = time;
           }
         }
       }
@@ -159,14 +138,14 @@ class ListPanel extends React.Component {
   }
 
   check = (event) => {
-    for (let i = 0; i<this.props.activities.length; i++) {
-      if (this.props.activities[i].name === event.target.name){
-        this.props.activities[i].complete = event.target.checked;
+    for (let i = 0; i<this.props.todayActivities.length; i++) {
+      if (this.props.todayActivities[i].name === event.target.name){
+        this.props.todayActivities[i].complete = event.target.checked;
       }
     }
   }
 
-  generateDynamicRow = ({name, category, duration, complete, editable}) => {
+  generateDynamicRow = ({name, category, duration, complete}) => {
     return (
       <TableRow key={name}>
         <TableCell align="right">
@@ -206,7 +185,7 @@ class ListPanel extends React.Component {
             </TableRow>
           </TableHead>
           <TableBody>
-            {this.props.activities.map((activity) => 
+            {this.props.todayActivities.map((activity) => 
               this.generateDynamicRow(activity)
             )}
           </TableBody>
@@ -229,11 +208,21 @@ class GraphPanel extends React.Component {
     return (
       <div id='graph_panel'>
         Graph panel
-        <p>{this.props.activities[0].name}</p>
-        <p>{this.props.activities[0].complete?'true': 'false'}</p>
       </div>
     );
   }
 }
 
 export default App;
+
+
+/*
+TODO:
+1. "delete" functionality
+2. It seems like we can directly modify props in ListPanel inorder to change the state in Contents;
+  should we do better by using "setState"?
+3. how do we establish a one-two-one relationship between the data in the table and the data in the state?
+
+
+
+*/
