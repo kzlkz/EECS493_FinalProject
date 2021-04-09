@@ -11,6 +11,10 @@ import Input from '@material-ui/core/Input';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 
+import DoughnutChart from './charts/DoughnutChart'
+import LineChart from './charts/LineChart'
+import PieChart from './charts/PieChart'
+
 const catOptions = [
   'work', 'entertainment', 'personal'
 ];
@@ -56,12 +60,15 @@ class Contents extends React.Component {
       //   }
       // },
       activities: [
-        {'name':'493 Prototype', 'category':'work', 'duration':2, 'complete':false, 'editable': true},
+        {'name':'493 Prototype', 'category':'work', 'duration':2, 'complete':true, 'editable': true},
+        {'name':'492 Prototype', 'category':'work', 'duration':2, 'complete':true, 'editable': true},
         {'name':'watch a movie', 'category':'entertainment', 'duration':3, 'complete':false, 'editable': true}
       ],
       show_list: 'visible',
       show_graphs: 'hidden'
     };
+    this.updateName = this.updateName.bind(this);
+    this.updateDuration = this.updateDuration.bind(this);
   }
 
   clickList = () => {
@@ -70,6 +77,47 @@ class Contents extends React.Component {
       show_graphs: 'hidden'
     });
   }
+
+  updateName = (event) => {
+    if (event.code === 'Enter') {
+      for (let i = 0; i<this.state.activities.length; i++) {
+        if (this.state.activities[i].name === event.target.name){
+          let new_activities = this.state.activities;
+          new_activities[i].name = event.target.value;
+          this.setState({
+            activities: new_activities
+          }
+          )
+        }
+      }
+    }
+  }
+
+
+  updateDuration = (event) => {
+    if (event.code === 'Enter') {
+      const time = event.target.value;
+      for (let i = 0; i<this.state.activities.length; i++) {
+        // check name
+        if (this.state.activities[i].name === event.target.name){
+          if (isNaN(time) || time < 0){
+            alert('Duration should be a positive numeric value');
+          } else {
+            let new_activities = this.state.activities;
+            new_activities[i].duration = parseFloat(time);
+            console.log(time);
+            this.setState({
+              activities: new_activities
+            }, () => {
+              console.log("new")
+              console.log(this.state.activities)
+            })
+          }
+        }
+      }
+    }
+  }
+
 
   clickGraphs = () => {
     this.setState({
@@ -80,9 +128,13 @@ class Contents extends React.Component {
 
   render() {
     const { activities } = this.state;
-    const list = activities.map((a) => 
+    const list = activities.map((a) =>  {
+      return(
       <p>{a.name}  {a.Duration}   {a.category}</p>
+      )
+    }
     );
+    console.log(activities)
     return (
     <div id='contents'>
       <div>{list}</div>
@@ -97,7 +149,7 @@ class Contents extends React.Component {
         >Show Graphs</button>
       </div>
       <div style={{visibility:this.state.show_list}}>
-        <ListPanel activities={this.state.activities}/>
+        <ListPanel activities={this.state.activities} updateDuration={this.updateDuration} updateName={this.updateName}/>
       </div>
       <div style={{visibility:this.state.show_graphs}}>
         <GraphPanel activities={this.state.activities}/>
@@ -130,6 +182,7 @@ class ListPanel extends React.Component {
   categoryChange = (event) => {
   }
 
+  /*
   updateName = (event) => {
     if (event.code === 'Enter') {
       for (let i = 0; i<this.props.activities.length; i++) {
@@ -157,6 +210,7 @@ class ListPanel extends React.Component {
       }
     }
   }
+  */
 
   check = (event) => {
     for (let i = 0; i<this.props.activities.length; i++) {
@@ -170,7 +224,7 @@ class ListPanel extends React.Component {
     return (
       <TableRow key={name}>
         <TableCell align="right">
-          <Input name={name} defaultValue={name} onKeyDown={this.updateName}/>
+          <Input name={name} defaultValue={name} onKeyDown={this.props.updateName}/>
         </TableCell>
         <TableCell align="right">
           <Select
@@ -183,7 +237,7 @@ class ListPanel extends React.Component {
           </Select>
         </TableCell>
         <TableCell align="right">
-          <Input name={name} defaultValue={duration} onKeyDown={this.updateDuration}/>
+          <Input name={name} defaultValue={duration} onKeyDown={this.props.updateDuration}/>
         </TableCell>
         <TableCell align="right">
           <input type='checkbox' name={name} value={complete?'checked':'unchecked'} onClick={this.check}/>
@@ -221,7 +275,7 @@ class GraphPanel extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      activity: []
+      activities: this.props.activities
     };
   }
 
@@ -231,6 +285,9 @@ class GraphPanel extends React.Component {
         Graph panel
         <p>{this.props.activities[0].name}</p>
         <p>{this.props.activities[0].complete?'true': 'false'}</p>
+        <DoughnutChart daily_activity={this.state.activities} />
+        <LineChart daily_activity={this.state.activities} />
+        <PieChart daily_activity={this.state.activities} />
       </div>
     );
   }
